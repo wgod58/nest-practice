@@ -1,24 +1,20 @@
 import {
-  Table,
+  Entity,
   Column,
-  Model,
-  PrimaryKey,
-  AutoIncrement,
-} from 'sequelize-typescript';
+  BaseEntity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Quiz } from './quiz.entity';
 
-@Table
-export class Question extends Model {
-  @PrimaryKey
-  @AutoIncrement
-  @Column
+@Entity('question')
+export class Question extends BaseEntity {
+  @PrimaryGeneratedColumn({ comment: 'The quiz unique identifier' })
   id: number;
 
-  @Column
+  @Column({ type: 'varchar' })
   question: string;
 
-  // @HasOne(() => Quiz, { foreignKey: 'id', sourceKey: 'quizId' })
-  // quiz: Quiz;
+  @ManyToOne(() => Quiz, (quiz) => quiz.questions)
+  quiz: Quiz;
 }
-
-// Question.belongsTo(Quiz);

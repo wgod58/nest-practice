@@ -3,10 +3,13 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
+  ParseIntPipe,
   Post,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { Quiz } from 'src/database/quiz.entity';
 import { CreateQuizDTO } from './dto/createQuiz.dto';
 import { QuizService } from './quiz.service';
 
@@ -15,8 +18,13 @@ export class QuizController {
   constructor(private quizService: QuizService) {}
 
   @Get('/')
-  getAllQuiz() {
-    return this.quizService.getAllQuiz();
+  getAllQuiz(): Promise<Quiz[]> {
+    return this.quizService.findAllQuiz();
+  }
+
+  @Get('/:id')
+  getOneQuiz(@Param('id', ParseIntPipe) id: number): Promise<Quiz> {
+    return this.quizService.findOneQuiz(id);
   }
 
   @Post('/')

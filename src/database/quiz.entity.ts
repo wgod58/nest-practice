@@ -1,34 +1,26 @@
 import {
-  Table,
+  Entity,
   Column,
-  Model,
-  PrimaryKey,
-  AutoIncrement,
-  Default,
-} from 'sequelize-typescript';
+  BaseEntity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+} from 'typeorm';
 import { Question } from './question.entity';
 
-@Table
-export class Quiz extends Model {
-  @PrimaryKey
-  @AutoIncrement
-  @Column
+@Entity('quiz')
+export class Quiz extends BaseEntity {
+  @PrimaryGeneratedColumn({ comment: 'The quiz unique identifier' })
   id: number;
 
-  @Column
+  @Column({ type: 'varchar' })
   title: string;
 
-  @Column
+  @Column({ type: 'text' })
   description: string;
 
-  @Default(() => 1)
-  @Column
+  @Column({ type: 'boolean', default: 1 })
   active: boolean;
 
-  // @HasMany(() => Question, {
-  //   // sourceKey: 'id',
-  //   foreignKey: 'quizId',
-  //   // as: 'questions',
-  // })
-  // questions: Question[];
+  @OneToMany(() => Question, (question) => question.quiz)
+  questions: Question[];
 }

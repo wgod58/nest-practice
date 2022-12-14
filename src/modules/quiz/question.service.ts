@@ -1,29 +1,56 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateQuestionDTO } from './dto/createQuestion.dto';
 import { Question } from '../../database/question.entity';
-import { Sequelize } from 'sequelize-typescript';
-// import { Transaction } from 'sequelize';
+// import { QuizService } from './quiz.service';
+import { Quiz } from 'src/database/quiz.entity';
 
 @Injectable()
 export class QuestionService {
   constructor(
-    @Inject('QUESTION_REPOSITORY') private questionRepository: typeof Question,
-    @Inject('SEQUELIZE')
-    private readonly sequelizeInstance: Sequelize,
+    @InjectRepository(Question)
+    private questionRepository: Repository<Question>,
+    // private quizService: QuizService,
+    private dataSource: DataSource,
   ) {}
 
-  getAllQuestion() {
-    return this.questionRepository.findAll<Question>();
+  getAllQuestion(): Promise<Question[]> {
+    return this.questionRepository.find();
   }
 
-  async createNewQuestion(question: CreateQuestionDTO) {
-    const transaction = await this.sequelizeInstance.transaction();
-    const result = await this.questionRepository.create(
-      { ...question },
-      { transaction: transaction },
-    );
+  async createNewQuestion(question: CreateQuestionDTO): Promise<Question> {
+    const queryRunner = this.dataSource.createQueryRunner();
 
-    await transaction.commit();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    let result;
+
+    try {
+      const quiz = await queryRunner.manager.findOne(Quiz, {
+        where: { id: question.quizId },
+      });
+
+      const newQuestion = await queryRunner.manager.create(Question, {
+        question: question.question,
+      });
+
+      // const quiz = await this.quizService.findOneQuiz(question.quizId);
+      // const newQuestion = await this.questionRepository.create({
+      //   question: question.question,
+      // });
+      // throw new Error('test');
+      newQuestion.quiz = quiz;
+      await newQuestion.save();
+      await queryRunner.commitTransaction();
+      result = newQuestion;
+    } catch (error) {
+      console.log(error);
+      await queryRunner.rollbackTransaction();
+      throw new Error(error);
+    } finally {
+      await queryRunner.release();
+    }
 
     return result;
   }

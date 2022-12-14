@@ -1,40 +1,30 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateQuizDTO } from './dto/createQuiz.dto';
 import { Quiz } from '../../database/quiz.entity';
-import { Question } from '../../database/question.entity';
-import { Sequelize } from 'sequelize-typescript';
-// import { Transaction } from 'sequelize';
+// import { Question } from '../../database/question.entity';
 
 @Injectable()
 export class QuizService {
   constructor(
-    @Inject('QUIZ_REPOSITORY') private quizRepository: typeof Quiz,
-    @Inject('SEQUELIZE')
-    private readonly sequelizeInstance: Sequelize,
+    @InjectRepository(Quiz) private quizRepository: Repository<Quiz>,
   ) {}
 
-  getAllQuiz() {
-    return this.quizRepository.findAll({
-      include: [
-        {
-          model: Question,
-          // as: 'questions',
-          required: false,
-          // include: [{ model: Quiz, required: false }],
-        },
-      ],
+  findAllQuiz(): Promise<Quiz[]> {
+    return this.quizRepository.find({ relations: ['questions'] });
+  }
+
+  findOneQuiz(id: number): Promise<Quiz> {
+    return this.quizRepository.findOne({
+      where: { id },
+      relations: ['questions'],
     });
   }
 
-  async createNewQuiz(quiz: CreateQuizDTO) {
-    const transaction = await this.sequelizeInstance.transaction();
-    const result = await this.quizRepository.create(
-      { ...quiz },
-      { transaction: transaction },
-    );
-
-    await transaction.commit();
-
+  async createNewQuiz(quiz: CreateQuizDTO): Promise<Quiz> {
+    const result = await this.quizRepository.save(quiz);
+    // await result.save();
     return result;
   }
 }
