@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Post,
   UsePipes,
   ValidationPipe,
@@ -19,8 +20,9 @@ export class QuizController {
   }
 
   @Post('/')
+  @HttpCode(200)
   @UsePipes(ValidationPipe)
   createQuiz(@Body() quizData: CreateQuizDTO) {
-    return { data: quizData };
+    return this.quizService.createNewQuiz(quizData);
   }
 }
